@@ -34,3 +34,58 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
     ignore_public_acls = true
     restrict_public_buckets = true
 }
+
+data "aws_iam_policy_document" "tfstate_tls_only" {
+  statement {
+    sid = "DenyInsecureTransport"
+    effect = "Deny"
+    actions = ["s3:*"]
+    resources = [aws_s3_bucket.tfstate.arn, "${aws_s3_bucket.tfstate.arn}/*"]
+    principals {
+      type = "*"
+      identifiers = ["*"]
+    }
+    # activates the policy of deny access
+    # when securetransport = false. that is, tls only
+    condition {
+      test = "Bool"
+      variable = "aws:SecureTransport"
+      values = ["false"]
+    }
+  } 
+}
+
+resource "aws_s3_bucket_policy" "tfstate" {
+  bucket = aws_s3_bucket.tfstate.id
+  policy = data.aws_iam_policy_document.tfstate_tls_only.json
+}
+
+# ---------- Budget alert ----------
+resource "aws_budgets_budget" "monthly" {
+  name = "${var.project}-monthly"
+  budget_type = "COST"
+  limit_amount = tostring(var.budget_limit_usd)
+  limit_unit = "USD"
+  time_unit = "MONTHLY"
+  notification {
+    comparison_operator = "GREATER_THAN"
+    threshold = 50
+    threshold_type = "PERCENTAGE"
+    notification_type = "ACTUAL"
+    subscriber_email_addresses = [var.alert_email]
+  }
+  notification {
+    comparison_operator = "GREATER_THAN"
+    threshold = 80
+    threshold_type = "PERCENTAGE"
+    notification_type = "ACTUAL"
+    subscriber_email_addresses = [var.alert_email]
+  }
+  notification {
+    comparison_operator = "GREATER_THAN"
+    threshold = 100
+    threshold_type = "PERCENTAGE"
+    notification_type = "FORECASTED"
+    subscriber_email_addresses = [var.alert_email]
+  }
+}
