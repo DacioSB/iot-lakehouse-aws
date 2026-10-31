@@ -68,7 +68,7 @@ resource "aws_s3control_bucket_lifecycle_configuration" "this" {
   }
 
   dynamic "rule" {
-    for_each = var.expiration_days == nul ? [] : [var.expiration_days]
+    for_each = var.expiration_days == null ? [] : [var.expiration_days]
     content {
       id = "expire-objects"
       status = "Enabled"

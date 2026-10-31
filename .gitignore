@@ -6,3 +6,4 @@
 crash.log
 .venv/
 __pycache__/
+.aider*
