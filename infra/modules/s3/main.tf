@@ -55,8 +55,8 @@ resource "aws_s3_bucket_policy" "this" {
   depends_on = [ aws_s3_bucket_public_access_block.this ]
 }
 
-resource "aws_s3control_bucket_lifecycle_configuration" "this" {
-  bucket = aws_s3_bucket_policy.this.id
+resource "aws_s3_bucket_lifecycle_configuration" "this" {
+  bucket = aws_s3_bucket.this.id
 
   rule {
     id = "abort-incomplete-multipart"

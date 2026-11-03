@@ -1,5 +1,5 @@
 output "bucket_names" {
-  value = { for layer, m in module.bucket : layer => m.id}
+  value = { for layer, m in module.bucket : layer => m.id }
 }
 
 output "glue_databases" {
