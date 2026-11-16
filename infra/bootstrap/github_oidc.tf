@@ -69,8 +69,8 @@ resource "aws_iam_role" "gh_plan" {
   assume_role_policy = data.aws_iam_policy_document.plan_trust.json
 }
 
-resource "aws_iam_policy_attachment" "gh_plan_readonly" {
-  name       = aws_iam_role.gh_plan.name
+resource "aws_iam_role_policy_attachment" "gh_plan_readonly" {
+  role       = aws_iam_role.gh_plan.name
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
 
@@ -97,4 +97,53 @@ resource "aws_iam_role_policy" "gh_plan_state" {
   name = "tfstate-access"
   role = aws_iam_role.gh_plan.id
   policy = data.aws_iam_policy_document.plan_state.json
+}
+
+resource "aws_iam_role" "gh_apply" {
+  name = "${var.project}-gh-apply"
+  assume_role_policy = data.aws_iam_policy_document.apply_trust.json
+}
+
+data "aws_iam_policy_document" "apply" {
+  statement {
+    sid       = "ListStateBucket"
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.tfstate.arn]
+  }
+  statement {
+    sid       = "ReadWriteDevState"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/envs/dev/*"]
+  }
+  statement {
+    sid     = "LakeBuckets"
+    actions = ["s3:*"]
+    resources = [
+      "arn:aws:s3:::${local.dev_prefix}-*",
+      "arn:aws:s3:::${local.dev_prefix}-*/*",
+    ]
+  }
+  statement {
+    sid     = "GlueCatalog"
+    actions = ["glue:*"]
+    resources = [
+      "${local.glue_arn_base}:catalog",
+      "${local.glue_arn_base}:database/${local.glue_db_names}",
+      "${local.glue_arn_base}:table/${local.glue_db_names}/*",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "gh_apply" {
+  name   = "dev-apply"
+  role   = aws_iam_role.gh_apply.id
+  policy = data.aws_iam_policy_document.apply.json
+}
+
+output "gh_plan_role_arn" {
+  value = aws_iam_role.gh_plan.arn
+}
+
+output "gh_apply_role_arn" {
+  value = aws_iam_role.gh_apply.arn
 }
