@@ -73,3 +73,28 @@ resource "aws_iam_policy_attachment" "gh_plan_readonly" {
   name       = aws_iam_role.gh_plan.name
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
+
+data "aws_iam_policy_document" "plan_state" {
+  statement {
+    sid = "ListStateBucket"
+    actions = ["s3:ListBucket"]
+    resources = [ aws_s3_bucket.tfstate.arn ]
+  }
+  statement {
+    sid = "ReadState"
+    actions = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/envs/dev/*"]
+  }
+
+  statement {
+    sid = "LockfileOnly"
+    actions = ["s3:PutObject", "s3:DeleteObject", "s3:GetObject"]
+    resources = ["${aws_s3_bucket.tfstate.arn}/envs/dev/terraform.tfstate.tflock"]
+  }
+}
+
+resource "aws_iam_role_policy" "gh_plan_state" {
+  name = "tfstate-access"
+  role = aws_iam_role.gh_plan.id
+  policy = data.aws_iam_policy_document.plan_state.json
+}
