@@ -1,14 +1,14 @@
 resource "aws_s3_bucket" "this" {
-  bucket = var.bucket_name
+  bucket        = var.bucket_name
   force_destroy = var.force_destroy
 }
 
 resource "aws_s3_bucket_versioning" "this" {
-    count = var.versioning ? 1 : 0
-    bucket = aws_s3_bucket.this.id
-    versioning_configuration {
-      status = "Enabled"
-    }
+  count  = var.versioning ? 1 : 0
+  bucket = aws_s3_bucket.this.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
@@ -52,14 +52,14 @@ resource "aws_s3_bucket_policy" "this" {
   bucket = aws_s3_bucket.this.id
   policy = data.aws_iam_policy_document.tls_only.json
 
-  depends_on = [ aws_s3_bucket_public_access_block.this ]
+  depends_on = [aws_s3_bucket_public_access_block.this]
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
-    id = "abort-incomplete-multipart"
+    id     = "abort-incomplete-multipart"
     status = "Enabled"
     filter {}
     abort_incomplete_multipart_upload {
@@ -70,10 +70,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
   dynamic "rule" {
     for_each = var.expiration_days == null ? [] : [var.expiration_days]
     content {
-      id = "expire-objects"
+      id     = "expire-objects"
       status = "Enabled"
       filter {
-        
+
       }
       expiration {
         days = rule.value

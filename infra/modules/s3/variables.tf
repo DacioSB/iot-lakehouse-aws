@@ -3,17 +3,17 @@ variable "bucket_name" {
 }
 
 variable "force_destroy" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "versioning" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "expiration_days" {
-  type = number
-  default = null
+  type        = number
+  default     = null
   description = "Expire all objects after N days. null means never expire."
 }
